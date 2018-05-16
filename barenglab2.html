@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Lab 2 - Jeopardy</title>
+	<style type="text/css">
+	body {
+		background-color: white;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	}
+	h1 {
+		text-align: center;
+		color: #54BD9F;
+		font-size: 4em;
+		font-style: italic;
+		text-transform: uppercase;
+		padding: 0;
+		margin: 5px;
+		padding: 1.5em;
+		padding-top: 1em;
+	}
+	#container {
+		width: 100%;
+		display: grid;
+		margin: 10px auto;
+		grid-gap: 10px;
+		grid-template-columns: repeat(5, minmax(100px, 1fr));
+		grid-auto-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
+	}
+	.item {
+		background-color: #54BD9F;
+		color: white;
+		padding: 5px;
+		border-radius: 2px;
+		text-align: center;
+	}
+	.headings {
+		background-color: #F39C12;
+		text-transform: uppercase;
+		color: #1F618D;
+		font-weight: bold;
+		font-size: 22px;
+		padding: 1em;
+	}
+	.value {
+		background-color: #2E4B77;
+		font-size: 40px;
+		font-weight: bold;
+		cursor: pointer;
+	}
+	.modal {
+		background-color: #fff;
+		color: #222;
+		position: absolute;
+		margin-left: auto;
+		margin-right: auto;
+		top: 70px;
+		left: 0;
+		right: 0;
+		z-index: 9;
+		padding: 15px;
+		box-shadow: 0px 20px 40px #1462a1;
+		border-radius: 2px;
+		text-align: center;
+		width: 50%;
+		max-width: 550px;
+		display: none;
+	}
+	.open {
+		display: block;
+	}
+	</style>
+</head>
+<body>
+	<h1>Jeopardy</h1>
+	<div id="container">
+	</div>
+
+	<div class="modal">
+	</div>
+
+<script type="text/javascript">
+const x = 'http://jservice.io/api/categories?count=5&offset=10'
+var categories = []
+let getData = function(url) {
+	return new Promise(function(resolve, reject) {
+		let xhr = new XMLHttpRequest()
+		xhr.onload = function() {
+			if (xhr.status ==  200) {
+	   		resolve(xhr.response)	
+	  		} else {
+	    		reject(xhr.responseText)
+			}
+		}
+		xhr.onerror = function() {
+  			reject(Error('Network Error'))
+		}
+		xhr.open('GET', url)
+		xhr.send()
+	})
+}
+let requestsArray = []
+getData(x).then(res=> {
+	categories = JSON.parse(res)
+	let urls = []
+	for (let i = 0; i < 5; i++) {
+		urls.push('http://jservice.io/api/category?id='+ categories[i].id )
+	}
+	for (let i = 0; i < 5; i++) {
+		requestsArray.push(getData(urls[i]))
+	}
+	return Promise.all([])
+})
+.then(res => {
+	Promise.all(requestsArray).then(res=> {
+		requestsArray = res
+		for (let i = 0; i < 5; i++) {
+			requestsArray[i] = JSON.parse(requestsArray[i])
+			var div = document.createElement('div')
+			div.innerHTML = requestsArray[i].title
+			div.classList.add('item')
+			document.getElementById('container').appendChild(div)
+			div.classList.add('headings')
+		}
+		for(let i = 0; i < 5; i++) {	
+				for (let j = 0; j < 5; j++) {
+					var div2 = document.createElement('div')
+					div2.innerHTML = "$" + requestsArray[j].clues[i].value
+					div2.classList.add('item')
+					div2.classList.add('value')
+					div2.onclick = function() {
+						document.querySelector('.modal').classList.add('open')
+						document.querySelector('.modal').innerHTML = "<h2>" + requestsArray[j].clues[i].question + "</h2> <p>(Click on the box to reveal answer)</p>"
+						document.querySelector('.modal').onclick = function() {
+							this.innerHTML = "<h2> Answer: " + requestsArray[j].clues[i].answer + "</h2> <p>(Click again to close box)</p>"
+							this.onclick = function() {
+								document.querySelector('.modal').classList.remove('open')
+							}
+						}
+					}
+					document.getElementById('container').appendChild(div2)
+				}
+			}
+		})
+})
+.catch(error => {
+	console.log(error)
+})
+</script>
+
+</body>
+</html>
